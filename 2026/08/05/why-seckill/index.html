@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="一、缘起：从“混学分”到“练内功”作为一名报考计算机技术（专硕）的考生，我深知复试时导师最看重的是工程落地能力。 起初我也想过随便找个“学生管理系统”应付了事，但在复习《操作系统》和《计算机网络》的过程中，我意识到：如果我的毕设仅仅停留在简单的增删改查（CRUD），很难证明我对多线程、IO模型和一致性问题有深入理解。 因此，我决定将毕设作为一个完整的实战项目来打磨，目标是：既能顺利通过答辩，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目">
+<meta property="og:url" content="http://example.com/2026/08/05/why-seckill/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="一、缘起：从“混学分”到“练内功”作为一名报考计算机技术（专硕）的考生，我深知复试时导师最看重的是工程落地能力。 起初我也想过随便找个“学生管理系统”应付了事，但在复习《操作系统》和《计算机网络》的过程中，我意识到：如果我的毕设仅仅停留在简单的增删改查（CRUD），很难证明我对多线程、IO模型和一致性问题有深入理解。 因此，我决定将毕设作为一个完整的实战项目来打磨，目标是：既能顺利通过答辩，">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-08-05T15:04:49.070Z">
+<meta property="article:modified_time" content="2026-08-09T05:50:09.139Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="RabbitMQ">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="Spring Boot">
+<meta property="article:tag" content="考研复试">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-why-seckill" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/08/05/why-seckill/" class="article-date">
+  <time class="dt-published" datetime="2026-08-05T15:04:49.070Z" itemprop="datePublished">2026-08-05</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/">毕业设计</a>►<a class="article-category-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B/">技术选型</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+  
+    
+    <span id="more"></span>
+
+
+<h2 id="一、缘起：从“混学分”到“练内功”"><a href="#一、缘起：从“混学分”到“练内功”" class="headerlink" title="一、缘起：从“混学分”到“练内功”"></a>一、缘起：从“混学分”到“练内功”</h2><p>作为一名报考<strong>计算机技术（专硕）<strong>的考生，我深知复试时导师最看重的是</strong>工程落地能力</strong>。</p>
+<p>起初我也想过随便找个“学生管理系统”应付了事，但在复习《操作系统》和《计算机网络》的过程中，我意识到：如果我的毕设仅仅停留在简单的增删改查（CRUD），很难证明我对多线程、IO模型和一致性问题有深入理解。</p>
+<p>因此，我决定将毕设作为一个<strong>完整的实战项目</strong>来打磨，目标是：既能顺利通过答辩，又能成为复试时的核心亮点。</p>
+<h2 id="二、为什么是“秒杀系统”？"><a href="#二、为什么是“秒杀系统”？" class="headerlink" title="二、为什么是“秒杀系统”？"></a>二、为什么是“秒杀系统”？</h2><p>秒杀是电商业务中最典型的<strong>高并发场景</strong>。我认为它完美契合了我的需求：</p>
+<ol>
+<li><strong>痛点明确</strong>：瞬间流量洪峰、数据一致性（超卖问题）、系统可用性，这些都是后端开发的核心难题。</li>
+<li><strong>技术覆盖面广</strong>：从前端限流到后端缓存、消息队列，再到数据库事务，能串联起我本科所学的Java技术栈。</li>
+<li><strong>区分度高</strong>：相比于普通的MIS（管理信息系统），秒杀系统在架构设计上更能体现一个学生的技术上限。</li>
+</ol>
+<h2 id="三、技术选型背后的思考"><a href="#三、技术选型背后的思考" class="headerlink" title="三、技术选型背后的思考"></a>三、技术选型背后的思考</h2><p>这次选型我没有盲目追新，而是选择了<strong>生态最成熟、企业应用最广泛</strong>的组合：</p>
+<ul>
+<li><strong>后端基石：Spring Boot + MyBatis-Plus</strong><ul>
+<li>原因：Java生态稳定，Spring框架对事务和IOC的支持能让我更专注于业务逻辑而非底层配置。</li>
+</ul>
+</li>
+<li><strong>缓存防线：Redis</strong><ul>
+<li>原因：秒杀的核心瓶颈在于数据库。我计划利用Redis的<strong>原子操作（Atomic Operations）<strong>和</strong>单线程模型</strong>来解决库存扣减时的竞态条件问题。</li>
+</ul>
+</li>
+<li><strong>削峰填谷：RabbitMQ</strong><ul>
+<li>原因：面对海量并发请求，直接写入数据库必然会崩溃。引入消息队列可以将同步请求转化为异步处理，提高系统的<strong>吞吐量（Throughput）</strong>。</li>
+</ul>
+</li>
+<li><strong>压测验证：JMeter</strong><ul>
+<li>原因：优化不能靠嘴说。我计划通过压力测试，量化系统在引入缓存和MQ前后的**QPS（每秒查询率）**变化，用数据支撑论文结论。</li>
+</ul>
+</li>
+</ul>
+<h2 id="四、我预判的三大难点"><a href="#四、我预判的三大难点" class="headerlink" title="四、我预判的三大难点"></a>四、我预判的三大难点</h2><p>在开始编码前，我分析了该系统的核心难点，这也是我在复试时可能会被问到的地方：</p>
+<ol>
+<li><strong>超卖问题（数据一致性）：</strong><ul>
+<li>在并发情况下，如何防止多个线程同时判断库存&gt;0，导致库存扣减为负数？</li>
+<li><em>我的思路：</em> 使用Redis的<code>DECR</code>原子操作配合数据库乐观锁，或者引入Redisson分布式锁。</li>
+</ul>
+</li>
+<li><strong>缓存击穿与雪崩：</strong><ul>
+<li>热点Key过期瞬间，大量请求直接打到数据库怎么办？</li>
+<li><em>我的思路：</em> 采用互斥锁（Mutex Lock）重建缓存，或对Key设置随机过期时间。</li>
+</ul>
+</li>
+<li><strong>接口幂等性：</strong><ul>
+<li>网络超时重试导致用户重复下单怎么办？</li>
+<li><em>我的思路：</em> 基于Token机制或唯一ID校验，确保同一请求只会被处理一次。</li>
+</ul>
+</li>
+</ol>
+<h2 id="五、进度规划"><a href="#五、进度规划" class="headerlink" title="五、进度规划"></a>五、进度规划</h2><ul>
+<li><strong>1月-2月（基础构建）：</strong> 搭建SpringBoot+Vue前后端分离架构，实现基本的用户认证和商品展示。</li>
+<li><strong>3月（核心攻坚）：</strong> 重点攻克Redis预扣库存与RabbitMQ异步下单模块，解决超卖问题。</li>
+<li><strong>4月（测试优化）：</strong> 进行JMeter压测，根据结果调整JVM参数和数据库索引，撰写论文。</li>
+<li><strong>5月（答辩准备）：</strong> 整理项目文档，录制演示视频，准备复试面试素材。</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>我不求做出能抗住双十一流量的系统，但我希望通过这个项目，<strong>把书本上的“锁、缓存、消息队列”变成真正跑起来的代码</strong>。</p>
+<p>本博客将持续更新我在开发中遇到的“坑”与解决方案，既是对毕设的记录，也是为了复试时能有底气地对导师说：“这个项目，是我一行行代码敲出来的。”</p>
+<hr>
+
+  
+</div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/08/05/why-seckill/" data-id="cuidyTz4I6niyOhKsQ5S0CFHd" data-title="毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/" rel="tag">Redis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Spring-Boot/" rel="tag">Spring Boot</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/" rel="tag">考研复试</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/08/09/seckill-post/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          基于 Spring Boot 的高并发秒杀系统：设计与落地
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/08/05/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Hello World</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/">毕业设计</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B/">技术选型</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/JMeter/" rel="tag">JMeter</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring-Boot/" rel="tag">Spring Boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/" rel="tag">考研复试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/JMeter/" style="font-size: 10px;">JMeter</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/MySQL/" style="font-size: 10px;">MySQL</a> <a href="/tags/RabbitMQ/" style="font-size: 20px;">RabbitMQ</a> <a href="/tags/Redis/" style="font-size: 20px;">Redis</a> <a href="/tags/Spring-Boot/" style="font-size: 20px;">Spring Boot</a> <a href="/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/" style="font-size: 20px;">考研复试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/08/">August 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/08/09/seckill-post/">基于 Spring Boot 的高并发秒杀系统：设计与落地</a>
+          </li>
+        
+          <li>
+            <a href="/2026/08/05/why-seckill/">毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目</a>
+          </li>
+        
+          <li>
+            <a href="/2026/08/05/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

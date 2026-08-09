@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>基于 Spring Boot 的高并发秒杀系统：设计与落地 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言这是我的毕业设计项目系列博客的第二篇。第一篇讲了为什么选这个题目，这一篇讲怎么落地。 作为一个报考**计算机技术（专硕）**的考生，我做这个项目的目标很明确：不止是为了通过答辩，更要让它成为复试时导师眼中的”硬通货”。 所以这篇文章不会只贴代码，我会重点讲每一个技术决策背后的思考——包括我踩过的坑、翻过的车、以及最终的解决方案。  一、为什么需要”三层防护”？先想一个经典问题：100 件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于 Spring Boot 的高并发秒杀系统：设计与落地">
+<meta property="og:url" content="http://example.com/2026/08/09/seckill-post/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="前言这是我的毕业设计项目系列博客的第二篇。第一篇讲了为什么选这个题目，这一篇讲怎么落地。 作为一个报考**计算机技术（专硕）**的考生，我做这个项目的目标很明确：不止是为了通过答辩，更要让它成为复试时导师眼中的”硬通货”。 所以这篇文章不会只贴代码，我会重点讲每一个技术决策背后的思考——包括我踩过的坑、翻过的车、以及最终的解决方案。  一、为什么需要”三层防护”？先想一个经典问题：100 件">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-08-09T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T05:50:14.426Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="JMeter">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="RabbitMQ">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="Spring Boot">
+<meta property="article:tag" content="考研复试">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-seckill-post" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/08/09/seckill-post/" class="article-date">
+  <time class="dt-published" datetime="2026-08-09T02:00:00.000Z" itemprop="datePublished">2026-08-09</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/">毕业设计</a>►<a class="article-category-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      基于 Spring Boot 的高并发秒杀系统：设计与落地
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+  
+    
+    <span id="more"></span>
+
+
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这是我的毕业设计项目系列博客的第二篇。第一篇讲了<strong>为什么选这个题目</strong>，这一篇讲<strong>怎么落地</strong>。</p>
+<p>作为一个报考**计算机技术（专硕）**的考生，我做这个项目的目标很明确：不止是为了通过答辩，更要让它成为复试时导师眼中的”硬通货”。</p>
+<p>所以这篇文章不会只贴代码，我会重点讲<strong>每一个技术决策背后的思考</strong>——包括我踩过的坑、翻过的车、以及最终的解决方案。</p>
+<hr>
+<h2 id="一、为什么需要”三层防护”？"><a href="#一、为什么需要”三层防护”？" class="headerlink" title="一、为什么需要”三层防护”？"></a>一、为什么需要”三层防护”？</h2><p>先想一个经典问题：<strong>100 件商品，1000 人同时抢</strong>。如果只靠一条 SQL 会怎样？</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> goods <span class="keyword">SET</span> stock <span class="operator">=</span> stock <span class="operator">-</span> <span class="number">1</span> <span class="keyword">WHERE</span> id <span class="operator">=</span> ?</span><br></pre></td></tr></table></figure>
+
+<p>答案是：<strong>超卖 + 数据库被打死</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>超卖</strong></td>
+<td>1000 个请求同时读到 <code>stock &gt; 0</code>，都通过校验，库存扣到 -900</td>
+</tr>
+<tr>
+<td><strong>数据库连接池耗尽</strong></td>
+<td>1000 个并发同步写库，连接池（通常只有 20-50）瞬间占满，后续请求全部超时</td>
+</tr>
+</tbody></table>
+<h3 id="解决思路：分层拦截"><a href="#解决思路：分层拦截" class="headerlink" title="解决思路：分层拦截"></a>解决思路：分层拦截</h3><blockquote>
+<p><strong>核心思想：让请求在到达数据库之前，就被层层过滤掉 99%。</strong></p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">用户点击</span><br><span class="line">   ↓</span><br><span class="line">[第一层] Guava 限流（200 QPS）        → 挡掉突发流量洪峰</span><br><span class="line">   ↓</span><br><span class="line">[第二层] Redis 防重（5秒去重）         → 挡掉用户的重复点击/重试</span><br><span class="line">   ↓</span><br><span class="line">[第三层] Redis Lua 原子预扣             → 挡掉库存不足的请求（核心！）</span><br><span class="line">   ↓</span><br><span class="line">[第四层] RabbitMQ 异步下单              → 削峰填谷，保护数据库</span><br><span class="line">   ↓</span><br><span class="line">[第五层] DB 乐观锁兜底                  → 最后一道防线，保证数据绝对一致</span><br><span class="line">   ↓</span><br><span class="line">   下单成功</span><br></pre></td></tr></table></figure>
+
+<p>每一层只做一件事，职责清晰，论文里画这张图非常加分。</p>
+<hr>
+<h2 id="二、核心链路设计"><a href="#二、核心链路设计" class="headerlink" title="二、核心链路设计"></a>二、核心链路设计</h2><h3 id="2-1-正常流程"><a href="#2-1-正常流程" class="headerlink" title="2.1 正常流程"></a>2.1 正常流程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">前端 POST /seckill/&#123;goodsId&#125;</span><br><span class="line">   │</span><br><span class="line">   ▼</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│ 1. Guava RateLimiter（限流 200 QPS）    │</span><br><span class="line">│ 2. Redis SETNX 防重（5秒过期）          │</span><br><span class="line">│ 3. Lua 原子脚本预扣库存（DECR + SADD）  │</span><br><span class="line">└─────────────┬───────────────────────────┘</span><br><span class="line">              │ 预扣成功 → 发送 MQ 消息</span><br><span class="line">              ▼</span><br><span class="line">      RabbitMQ 队列</span><br><span class="line">              │</span><br><span class="line">              ▼</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│ 4. Redisson 分布式锁                    │</span><br><span class="line">│ 5. DB 乐观锁更新库存（WHERE stock &gt; 0） │</span><br><span class="line">│ 6. 写入订单表（UNIQUE 约束防重复）      │</span><br><span class="line">└─────────────────────────────────────────┘</span><br><span class="line">              │</span><br><span class="line">              ▼</span><br><span class="line">   前端轮询 /seckill/result 获取结果</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>SeckillMessage</code> 是消息体，包含 <code>userId</code> 和 <code>goodsId</code>，通过 RabbitMQ 在 Controller 和 Consumer 之间传递。</p>
+</blockquote>
+<h3 id="2-2-异常与降级策略"><a href="#2-2-异常与降级策略" class="headerlink" title="2.2 异常与降级策略"></a>2.2 异常与降级策略</h3><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>异常场景</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RateLimiter 限流</td>
+<td>无法获取令牌</td>
+<td>返回”当前抢购人数过多，请稍后重试”</td>
+</tr>
+<tr>
+<td>Redis 防重</td>
+<td>同一用户 5 秒内重复请求</td>
+<td>返回”操作过于频繁”</td>
+</tr>
+<tr>
+<td>Lua 预扣</td>
+<td>库存不足（stock &lt;&#x3D; 0）</td>
+<td>直接返回”已售罄”，不发 MQ</td>
+</tr>
+<tr>
+<td>MQ 宕机</td>
+<td>消息发送失败</td>
+<td>回滚 Redis 库存（INCR），返回”系统繁忙”</td>
+</tr>
+<tr>
+<td>Consumer 异常</td>
+<td>消费者处理失败</td>
+<td>回滚 Redis 库存 + 已购标记，结果写 FAIL</td>
+</tr>
+<tr>
+<td>DB 库存不足</td>
+<td>Redis 与 DB 数据不一致</td>
+<td>事务回滚 + 库存回滚，结果写 FAIL</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、关键代码实现"><a href="#三、关键代码实现" class="headerlink" title="三、关键代码实现"></a>三、关键代码实现</h2><h3 id="3-1-Lua-原子脚本（防超卖的核心）"><a href="#3-1-Lua-原子脚本（防超卖的核心）" class="headerlink" title="3.1 Lua 原子脚本（防超卖的核心）"></a>3.1 Lua 原子脚本（防超卖的核心）</h3><h4 id="为什么不用-GET-DECR？"><a href="#为什么不用-GET-DECR？" class="headerlink" title="为什么不用 GET + DECR？"></a>为什么不用 <code>GET</code> + <code>DECR</code>？</h4><p>很多初学者会写成这样：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ❌ 错误示范：非原子操作，高并发下必超卖</span></span><br><span class="line"><span class="type">Long</span> <span class="variable">stock</span> <span class="operator">=</span> (Long) redisTemplate.opsForValue().get(<span class="string">&quot;stock:&quot;</span> + goodsId);</span><br><span class="line"><span class="keyword">if</span> (stock != <span class="literal">null</span> &amp;&amp; stock &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    redisTemplate.opsForValue().decrement(<span class="string">&quot;stock:&quot;</span> + goodsId);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>问题：</strong> <code>get</code> 和 <code>decr</code> 是两个独立操作，中间有时间窗口。当 100 个请求同时读到 <code>stock = 1</code>，它们都会通过 <code>if</code> 判断，然后各自执行 <code>decr</code>，最终库存变成 -99。</p>
+<h4 id="✅-正确方案：Lua-脚本"><a href="#✅-正确方案：Lua-脚本" class="headerlink" title="✅ 正确方案：Lua 脚本"></a>✅ 正确方案：Lua 脚本</h4><p>Redis 执行 Lua 脚本时是<strong>单线程原子性</strong>的——脚本执行期间，不会有其他任何命令插入。所以”判断 + 扣减 + 记录”三步在 Redis 眼里是<strong>一步操作</strong>。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- KEYS[1]: 库存 key</span></span><br><span class="line"><span class="comment">-- KEYS[2]: 已购用户集合 key</span></span><br><span class="line"><span class="comment">-- ARGV[1]: userId</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 1. 先判断是否已购买（防重复）</span></span><br><span class="line"><span class="keyword">local</span> bought = redis.call(<span class="string">&quot;sismember&quot;</span>, KEYS[<span class="number">2</span>], ARGV[<span class="number">1</span>])</span><br><span class="line"><span class="keyword">if</span> bought == <span class="number">1</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>   <span class="comment">-- 重复下单</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 再判断库存是否充足</span></span><br><span class="line"><span class="keyword">local</span> stock = <span class="built_in">tonumber</span>(redis.call(<span class="string">&quot;get&quot;</span>, KEYS[<span class="number">1</span>]))</span><br><span class="line"><span class="keyword">if</span> stock == <span class="literal">nil</span> <span class="keyword">or</span> stock &lt;= <span class="number">0</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>   <span class="comment">-- 已售罄</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 3. 原子扣减 + 记录购买</span></span><br><span class="line">redis.call(<span class="string">&quot;decr&quot;</span>, KEYS[<span class="number">1</span>])</span><br><span class="line">redis.call(<span class="string">&quot;sadd&quot;</span>, KEYS[<span class="number">2</span>], ARGV[<span class="number">1</span>])</span><br><span class="line"><span class="keyword">return</span> <span class="number">1</span>       <span class="comment">-- 预扣成功</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>返回值约定：</strong></p>
+<table>
+<thead>
+<tr>
+<th>返回值</th>
+<th>含义</th>
+<th>后续动作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-1</code></td>
+<td>重复下单</td>
+<td>返回”您已参与过本次秒杀”</td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>已售罄</td>
+<td>返回”手慢了，商品已抢完”</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>预扣成功</td>
+<td>发送 MQ 消息，返回”排队中”</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>💡 复试考点：</strong> 导师可能会问”为什么用 Lua 不用 Java 代码控制？” 答案就是：<strong>Redis 的单线程模型 + Lua 的原子性保证</strong>。在 Redis 执行 Lua 期间，不会有其他客户端的命令插队，这是 Java 层面的锁无法做到的（因为 Java 是分布式的，多个实例之间锁不互通）。</p>
+</blockquote>
+<hr>
+<h3 id="3-2-Redis-防重-Guava-限流"><a href="#3-2-Redis-防重-Guava-限流" class="headerlink" title="3.2 Redis 防重 + Guava 限流"></a>3.2 Redis 防重 + Guava 限流</h3><p>这两者是<strong>入口处的第一道和第二道闸门</strong>，顺序很重要：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ===== 第一道：全局限流 =====</span></span><br><span class="line"><span class="comment">// 初始化：RateLimiter.create(200) → 每秒放行 200 个请求</span></span><br><span class="line"><span class="keyword">if</span> (!rateLimiter.tryAcquire()) &#123;</span><br><span class="line">    <span class="comment">// 获取不到令牌，说明流量超过阈值</span></span><br><span class="line">    <span class="keyword">return</span> Result.error(<span class="string">&quot;当前抢购人数过多，请稍后重试&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ===== 第二道：用户级防重 =====</span></span><br><span class="line"><span class="comment">// SETNX：只有当 key 不存在时才设置成功（原子操作）</span></span><br><span class="line"><span class="type">Boolean</span> <span class="variable">firstRequest</span> <span class="operator">=</span> redisTemplate.opsForValue()</span><br><span class="line">    .setIfAbsent(<span class="string">&quot;seckill:u:&quot;</span> + userId + <span class="string">&quot;:&quot;</span> + goodsId, <span class="string">&quot;1&quot;</span>, <span class="number">5</span>, TimeUnit.SECONDS);</span><br><span class="line"><span class="keyword">if</span> (firstRequest == <span class="literal">null</span> || !firstRequest) &#123;</span><br><span class="line">    <span class="comment">// 5 秒内该用户已请求过</span></span><br><span class="line">    <span class="keyword">return</span> Result.error(<span class="string">&quot;操作过于频繁，请 5 秒后再试&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ===== 第三道：Lua 原子预扣 =====</span></span><br><span class="line"><span class="comment">// 执行上面的 Lua 脚本</span></span><br><span class="line"><span class="type">Long</span> <span class="variable">result</span> <span class="operator">=</span> (Long) redisTemplate.execute(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">DefaultRedisScript</span>&lt;&gt;(LUA_SCRIPT, Long.class),</span><br><span class="line">    Arrays.asList(<span class="string">&quot;seckill:stock:&quot;</span> + goodsId, <span class="string">&quot;seckill:bought:&quot;</span> + goodsId),</span><br><span class="line">    String.valueOf(userId)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (result == -<span class="number">1</span>) <span class="keyword">return</span> Result.error(<span class="string">&quot;您已参与过本次秒杀&quot;</span>);</span><br><span class="line"><span class="keyword">if</span> (result == <span class="number">0</span>)  <span class="keyword">return</span> Result.error(<span class="string">&quot;商品已售罄&quot;</span>);</span><br><span class="line"><span class="comment">// result == 1 → 继续往下走</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么顺序是 限流 → 防重 → 预扣？</strong></p>
+<table>
+<thead>
+<tr>
+<th>顺序</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>限流第一</td>
+<td>全局流量控制，挡掉绝大部分无效请求，减轻 Redis 压力</td>
+</tr>
+<tr>
+<td>防重第二</td>
+<td>在限流通过后，针对单个用户去重，避免同一用户狂点刷接口</td>
+</tr>
+<tr>
+<td>预扣第三</td>
+<td>最后才做库存判定，因为前两步已经过滤了 90% 的请求</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="3-3-MQ-异步消费（削峰填谷）"><a href="#3-3-MQ-异步消费（削峰填谷）" class="headerlink" title="3.3 MQ 异步消费（削峰填谷）"></a>3.3 MQ 异步消费（削峰填谷）</h3><p>预扣成功后，<strong>立即返回”排队中”</strong>，订单通过 RabbitMQ 异步创建。这是提升 QPS 的关键一步。</p>
+<h4 id="为什么要异步？"><a href="#为什么要异步？" class="headerlink" title="为什么要异步？"></a>为什么要异步？</h4><p>假设同步下单需要 50ms（查库存 + 写订单 + 扣库存），那么 1000 并发 &#x3D; 每秒需要处理 1000 个 50ms 的操作 → 数据库连接池瞬间爆炸。</p>
+<p>异步化之后：Controller 只做 5ms 的 Redis 操作就返回，真正的下单由后台消费者慢慢消化（比如每秒处理 200 个），数据库压力骤降。</p>
+<h4 id="生产者（Controller-层）"><a href="#生产者（Controller-层）" class="headerlink" title="生产者（Controller 层）"></a>生产者（Controller 层）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@PostMapping(&quot;/seckill/&#123;goodsId&#125;&quot;)</span></span><br><span class="line"><span class="keyword">public</span> Result&lt;?&gt; seckill(<span class="meta">@PathVariable</span> Long goodsId, <span class="meta">@RequestHeader(&quot;userId&quot;)</span> Long userId) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... 前面的限流 + 防重 + Lua 预扣 ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 预扣成功 → 封装消息体 → 发送 MQ</span></span><br><span class="line">    <span class="type">SeckillMessage</span> <span class="variable">msg</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SeckillMessage</span>(userId, goodsId);</span><br><span class="line">    rabbitTemplate.convertAndSend(</span><br><span class="line">        RabbitMQConfig.SECKILL_EXCHANGE,</span><br><span class="line">        RabbitMQConfig.SECKILL_ROUTING_KEY,</span><br><span class="line">        msg</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 立即返回，不等数据库操作</span></span><br><span class="line">    <span class="keyword">return</span> Result.success(<span class="string">&quot;排队中，请稍候查询结果&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="消费者（Service-层）"><a href="#消费者（Service-层）" class="headerlink" title="消费者（Service 层）"></a>消费者（Service 层）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RabbitListener(queues = RabbitMQConfig.SECKILL_QUEUE)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">createOrder</span><span class="params">(SeckillMessage msg)</span> &#123;</span><br><span class="line">    <span class="type">Long</span> <span class="variable">userId</span>  <span class="operator">=</span> msg.getUserId();</span><br><span class="line">    <span class="type">Long</span> <span class="variable">goodsId</span> <span class="operator">=</span> msg.getGoodsId();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取分布式锁（防止同一商品的并发消费）</span></span><br><span class="line">    <span class="type">RLock</span> <span class="variable">lock</span> <span class="operator">=</span> redissonClient.getLock(<span class="string">&quot;lock:seckill:&quot;</span> + goodsId);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        lock.lock(<span class="number">10</span>, TimeUnit.SECONDS);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 在锁内执行数据库操作</span></span><br><span class="line">        processSeckill(userId, goodsId);</span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        <span class="comment">// ===== 异常回滚 =====</span></span><br><span class="line">        <span class="comment">// 回滚 Redis 库存（+1）</span></span><br><span class="line">        redisTemplate.opsForValue().increment(<span class="string">&quot;seckill:stock:&quot;</span> + goodsId);</span><br><span class="line">        <span class="comment">// 移除已购标记</span></span><br><span class="line">        redisTemplate.opsForSet().remove(<span class="string">&quot;seckill:bought:&quot;</span> + goodsId, String.valueOf(userId));</span><br><span class="line">        <span class="comment">// 结果标记为失败</span></span><br><span class="line">        redisTemplate.opsForValue().set(</span><br><span class="line">            <span class="string">&quot;seckill:result:&quot;</span> + userId + <span class="string">&quot;:&quot;</span> + goodsId,</span><br><span class="line">            <span class="string">&quot;FAIL&quot;</span>, <span class="number">1</span>, TimeUnit.DAYS</span><br><span class="line">        );</span><br><span class="line">        log.error(<span class="string">&quot;创建订单失败，已回滚&quot;</span>, e);</span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (lock.isHeldByCurrentThread()) &#123;</span><br><span class="line">            lock.unlock();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Transactional</span>  <span class="comment">// 事务保证：扣库存和写订单要么全成功，要么全失败</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">processSeckill</span><span class="params">(Long userId, Long goodsId)</span> &#123;</span><br><span class="line">    <span class="comment">// 查商品信息（带缓存）</span></span><br><span class="line">    <span class="type">Goods</span> <span class="variable">goods</span> <span class="operator">=</span> goodsService.getGoodsCache(goodsId);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// DB 乐观锁扣库存：只有 stock &gt; 0 时才扣减</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">rows</span> <span class="operator">=</span> goodsMapper.reduceStock(goodsId);</span><br><span class="line">    <span class="keyword">if</span> (rows == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;DB 库存不足（Redis 与 DB 不一致）&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 写入订单</span></span><br><span class="line">    <span class="type">SeckillOrder</span> <span class="variable">order</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SeckillOrder</span>();</span><br><span class="line">    order.setUserId(userId);</span><br><span class="line">    order.setGoodsId(goodsId);</span><br><span class="line">    order.setGoodsName(goods.getName());</span><br><span class="line">    order.setGoodsPrice(goods.getSeckillPrice());</span><br><span class="line">    order.setStatus(<span class="number">0</span>); <span class="comment">// 0 = 待支付（模拟）</span></span><br><span class="line">    orderMapper.insert(order);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 把结果写回 Redis，供前端轮询查询</span></span><br><span class="line">    redisTemplate.opsForValue().set(</span><br><span class="line">        <span class="string">&quot;seckill:result:&quot;</span> + userId + <span class="string">&quot;:&quot;</span> + goodsId,</span><br><span class="line">        String.valueOf(order.getId()),</span><br><span class="line">        <span class="number">1</span>, TimeUnit.DAYS</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Mapper-中的乐观锁-SQL"><a href="#Mapper-中的乐观锁-SQL" class="headerlink" title="Mapper 中的乐观锁 SQL"></a>Mapper 中的乐观锁 SQL</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Mapper</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">GoodsMapper</span> <span class="keyword">extends</span> <span class="title class_">BaseMapper</span>&lt;Goods&gt; &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Update(&quot;UPDATE t_goods SET stock_count = stock_count - 1 &quot; +</span></span><br><span class="line"><span class="meta">            &quot;WHERE id = #&#123;goodsId&#125; AND stock_count &gt; 0&quot;)</span></span><br><span class="line">    <span class="type">int</span> <span class="title function_">reduceStock</span><span class="params">(<span class="meta">@Param(&quot;goodsId&quot;)</span> Long goodsId)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>关键点：</strong> <code>WHERE stock_count &gt; 0</code> 这个条件就是<strong>数据库的乐观锁</strong>。即使 Redis 预扣通过了，如果 DB 层面库存已经为 0，这条 SQL 的 <code>affected rows</code> 就是 0，订单不会创建。这是<strong>最后一道防线</strong>。</p>
+</blockquote>
+<hr>
+<h2 id="四、如何验证”零超卖”？"><a href="#四、如何验证”零超卖”？" class="headerlink" title="四、如何验证”零超卖”？"></a>四、如何验证”零超卖”？</h2><p>光说不练假把式。我用 JMeter 做了压力测试，并通过 SQL 验证数据一致性。</p>
+<h3 id="4-1-测试场景"><a href="#4-1-测试场景" class="headerlink" title="4.1 测试场景"></a>4.1 测试场景</h3><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>商品 ID</td>
+<td>2</td>
+</tr>
+<tr>
+<td>初始库存</td>
+<td>20 件</td>
+</tr>
+<tr>
+<td>并发用户数</td>
+<td>50 人同时请求</td>
+</tr>
+<tr>
+<td>请求总数</td>
+<td>200 次（每人发 4 次请求）</td>
+</tr>
+</tbody></table>
+<h3 id="4-2-验证-SQL"><a href="#4-2-验证-SQL" class="headerlink" title="4.2 验证 SQL"></a>4.2 验证 SQL</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- ① 验证库存：应该刚好为 0，不能是负数</span></span><br><span class="line"><span class="keyword">SELECT</span> stock_count <span class="keyword">FROM</span> t_goods <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ② 验证订单数：应该刚好等于初始库存（20 笔）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">FROM</span> t_seckill_order <span class="keyword">WHERE</span> goods_id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ③ 验证无重复下单：应该返回 0 行</span></span><br><span class="line"><span class="keyword">SELECT</span> user_id, <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> cnt</span><br><span class="line"><span class="keyword">FROM</span> t_seckill_order</span><br><span class="line"><span class="keyword">WHERE</span> goods_id <span class="operator">=</span> <span class="number">2</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> user_id</span><br><span class="line"><span class="keyword">HAVING</span> cnt <span class="operator">&gt;</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-3-实测结果"><a href="#4-3-实测结果" class="headerlink" title="4.3 实测结果"></a>4.3 实测结果</h3><table>
+<thead>
+<tr>
+<th>验证项</th>
+<th>预期</th>
+<th>实际</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>剩余库存</td>
+<td>0</td>
+<td><strong>0</strong> ✅</td>
+<td>无超卖</td>
+</tr>
+<tr>
+<td>订单总数</td>
+<td>20</td>
+<td><strong>20</strong> ✅</td>
+<td>无遗漏</td>
+</tr>
+<tr>
+<td>重复下单</td>
+<td>0 行</td>
+<td><strong>0 行</strong> ✅</td>
+<td>无重复</td>
+</tr>
+</tbody></table>
+<p><strong>三次压测，零超卖，零遗漏，零重复。</strong></p>
+<hr>
+<h2 id="五、QPS-性能对比"><a href="#五、QPS-性能对比" class="headerlink" title="五、QPS 性能对比"></a>五、QPS 性能对比</h2><p>我用 JMeter 分别测试了三种方案在 1000 并发下的表现：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>并发数</th>
+<th>平均 QPS</th>
+<th>响应时间（avg）</th>
+<th>超卖情况</th>
+<th>系统状态</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>纯 DB（无优化）</td>
+<td>1000</td>
+<td>~120</td>
+<td>8500ms</td>
+<td>❌ 有超卖</td>
+<td>连接池溢出，大量超时</td>
+</tr>
+<tr>
+<td>+ Redis 缓存</td>
+<td>1000</td>
+<td>~850</td>
+<td>120ms</td>
+<td>✅ 无超卖</td>
+<td>稳定</td>
+</tr>
+<tr>
+<td>+ Redis + MQ</td>
+<td>5000</td>
+<td>~3200</td>
+<td>35ms</td>
+<td>✅ 零超卖</td>
+<td>非常稳定</td>
+</tr>
+</tbody></table>
+<p><strong>结论：</strong> 引入 Redis + MQ 后，QPS 提升了 <strong>26 倍</strong>，响应时间从 8.5 秒降到 35 毫秒。</p>
+<blockquote>
+<p>这组数据我直接写进了论文的”第六章 系统测试”里，配上 JMeter 的截图，导师一眼就能看到优化效果。</p>
+</blockquote>
+<hr>
+<h2 id="六、踩坑实录"><a href="#六、踩坑实录" class="headerlink" title="六、踩坑实录"></a>六、踩坑实录</h2><h3 id="6-1-Redis-与数据库数据不一致"><a href="#6-1-Redis-与数据库数据不一致" class="headerlink" title="6.1 Redis 与数据库数据不一致"></a>6.1 Redis 与数据库数据不一致</h3><p><strong>现象：</strong> 偶尔出现 Redis 库存为 0，但数据库里还有剩余库存的情况。</p>
+<p><strong>排查过程：</strong></p>
+<ol>
+<li>查看日志，发现是 MQ 消费者在写入 DB 时抛了异常（数据库连接超时）</li>
+<li>但此时 Redis 库存已经扣减了</li>
+<li>导致”Redis 说没货了，DB 说还有货”的不一致状态</li>
+</ol>
+<p><strong>解决方案：</strong> 在 Consumer 的 <code>catch</code> 块中<strong>回滚 Redis 库存</strong>：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 异常时回滚</span></span><br><span class="line">redisTemplate.opsForValue().increment(<span class="string">&quot;seckill:stock:&quot;</span> + goodsId);</span><br><span class="line">redisTemplate.opsForSet().remove(<span class="string">&quot;seckill:bought:&quot;</span> + goodsId, userIdStr);</span><br></pre></td></tr></table></figure>
+
+<p>同时采用 <strong>Cache Aside Pattern</strong>：DB 操作成功后，主动删除 Redis 缓存，下次请求重新从 DB 加载。</p>
+<h3 id="6-2-重复下单的幽灵"><a href="#6-2-重复下单的幽灵" class="headerlink" title="6.2 重复下单的幽灵"></a>6.2 重复下单的幽灵</h3><p><strong>现象：</strong> JMeter 压测时，极少数情况下同一个用户出现了两笔订单。</p>
+<p><strong>原因：</strong> 用户在 5 秒防重窗口过期后，再次发起了请求。</p>
+<p><strong>解决方案：</strong> 双重防护——</p>
+<ol>
+<li><strong>Redis SETNX</strong>（5 秒窗口）：挡掉 99% 的重复请求</li>
+<li><strong>DB 唯一索引</strong>：在 <code>t_seckill_order</code> 表上加 <code>UNIQUE KEY uk_user_goods (user_id, goods_id)</code>，即使前面的防线失效，数据库也会拒绝重复插入</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER TABLE</span> t_seckill_order <span class="keyword">ADD</span> <span class="keyword">UNIQUE</span> KEY uk_user_goods (user_id, goods_id);</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-3-Redisson-锁的坑"><a href="#6-3-Redisson-锁的坑" class="headerlink" title="6.3 Redisson 锁的坑"></a>6.3 Redisson 锁的坑</h3><p><strong>现象：</strong> 消费者处理时间超过 10 秒时，锁自动过期，导致另一个消费者拿到锁，出现并发问题。</p>
+<p><strong>解决方案：</strong> 使用 Redisson 的 <strong>Watchdog 机制</strong>（自动续期），而不是手动设置过期时间：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ✅ 不指定过期时间，Redisson 会自动续期（默认 30 秒，每 10 秒续一次）</span></span><br><span class="line">lock.lock();  <span class="comment">// 不传参数 → 开启 Watchdog</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ❌ 不推荐：硬编码过期时间，业务没执行完锁就释放了</span></span><br><span class="line"><span class="comment">// lock.lock(10, TimeUnit.SECONDS);</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="七、环境兼容性踩坑"><a href="#七、环境兼容性踩坑" class="headerlink" title="七、环境兼容性踩坑"></a>七、环境兼容性踩坑</h2><h3 id="7-1-Knife4j-Springfox-在-Spring-Boot-2-7-崩溃"><a href="#7-1-Knife4j-Springfox-在-Spring-Boot-2-7-崩溃" class="headerlink" title="7.1 Knife4j &#x2F; Springfox 在 Spring Boot 2.7 崩溃"></a>7.1 Knife4j &#x2F; Springfox 在 Spring Boot 2.7 崩溃</h3><p><strong>现象：</strong> 启动时报错 <code>Failed to start bean &#39;documentationPluginsBootstrapper&#39;</code></p>
+<p><strong>原因：</strong> Springfox 不兼容 Spring Boot 2.7 的新路径匹配策略（<code>PathPatternParser</code>）。</p>
+<p><strong>解决：</strong> 弃用 Springfox，改用 <strong>SpringDoc OpenAPI</strong>（官方推荐的 OpenAPI 3.0 实现）：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springdoc<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>springdoc-openapi-ui<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.7.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="7-2-JJWT-在-JDK-11-缺少-JAXB"><a href="#7-2-JJWT-在-JDK-11-缺少-JAXB" class="headerlink" title="7.2 JJWT 在 JDK 11+ 缺少 JAXB"></a>7.2 JJWT 在 JDK 11+ 缺少 JAXB</h3><p><strong>现象：</strong> 使用 JWT 做登录认证时，运行时报 <code>ClassNotFoundException: javax.xml.bind.JAXBException</code></p>
+<p><strong>原因：</strong> JDK 11 移除了 JAXB API，而 jjwt 0.9.x 依赖它。</p>
+<p><strong>解决：</strong> 显式添加 JAXB 依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>javax.xml.bind<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jaxb-api<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.3.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.sun.xml.bind<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jaxb-impl<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.3.8<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.glassfish.jaxb<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jaxb-runtime<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.3.8<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>或者干脆升级到 <strong>jjwt 0.11.x+</strong>，它已经不依赖 JAXB 了。</p>
+</blockquote>
+<hr>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p>回顾整个项目，我从中学到的不仅是技术本身，更是<strong>架构思维</strong>：</p>
+<ol>
+<li><p><strong>不要相信任何一层防御是完美的。</strong> 即使 Redis 预扣成功了，DB 层面依然要做乐观锁兜底。多层防护不是冗余，是<strong>必要的安全网</strong>。</p>
+</li>
+<li><p><strong>异步化是提升性能的银弹。</strong> 把”快速响应”和”实际处理”解耦，系统的吞吐量立刻提升一个数量级。</p>
+</li>
+<li><p><strong>数据一致性是分布式系统永恒的主题。</strong> 缓存和数据库之间的同步、MQ 消息的可靠投递、消费者的事务回滚——每一个环节都可能出问题，必须有完善的补偿机制。</p>
+</li>
+<li><p><strong>压测数据不会骗人。</strong> 优化前和优化后的 QPS 对比，是最有说服力的证据。不管是写论文还是面试，数字比文字更有力量。</p>
+</li>
+</ol>
+<hr>
+<h2 id="附录：技术栈一览"><a href="#附录：技术栈一览" class="headerlink" title="附录：技术栈一览"></a>附录：技术栈一览</h2><table>
+<thead>
+<tr>
+<th>类别</th>
+<th>技术</th>
+<th>版本</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>后端框架</td>
+<td>Spring Boot</td>
+<td>2.7.18</td>
+<td>主框架</td>
+</tr>
+<tr>
+<td>持久层</td>
+<td>MyBatis-Plus</td>
+<td>3.5.x</td>
+<td>数据库操作</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td>Redis</td>
+<td>6.x</td>
+<td>预扣库存、防重、限流</td>
+</tr>
+<tr>
+<td>消息队列</td>
+<td>RabbitMQ</td>
+<td>3.x</td>
+<td>异步削峰</td>
+</tr>
+<tr>
+<td>分布式锁</td>
+<td>Redisson</td>
+<td>3.20.x</td>
+<td>分布式锁 + Watchdog</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>MySQL</td>
+<td>8.0</td>
+<td>数据持久化</td>
+</tr>
+<tr>
+<td>限流</td>
+<td>Guava RateLimiter</td>
+<td>32.x</td>
+<td>入口限流</td>
+</tr>
+<tr>
+<td>认证</td>
+<td>JJWT</td>
+<td>0.11.x</td>
+<td>JWT Token</td>
+</tr>
+<tr>
+<td>API 文档</td>
+<td>SpringDoc OpenAPI</td>
+<td>1.7.0</td>
+<td>接口文档</td>
+</tr>
+<tr>
+<td>压测</td>
+<td>JMeter</td>
+<td>5.6</td>
+<td>性能测试</td>
+</tr>
+<tr>
+<td>前端</td>
+<td>Vue 3 + Element Plus</td>
+<td>3.x</td>
+<td>管理后台（后续集成）</td>
+</tr>
+</tbody></table>
+<hr>
+<blockquote>
+<p><strong>下一篇预告：</strong> 《Vue 3 + Element Plus 秒杀系统前端搭建》—— 从零搭建管理后台，实现商品展示、秒杀按钮、订单查询等功能。</p>
+<p>本文是我毕业设计系列的第二篇，持续更新中。如果这个项目对你有启发，欢迎转发交流。</p>
+</blockquote>
+
+  
+</div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/08/09/seckill-post/" data-id="cuidWEOUBLBWcJTBicrMlv4Ys" data-title="基于 Spring Boot 的高并发秒杀系统：设计与落地" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JMeter/" rel="tag">JMeter</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/" rel="tag">Redis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Spring-Boot/" rel="tag">Spring Boot</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/" rel="tag">考研复试</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2026/08/05/why-seckill/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/">毕业设计</a><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B/">技术选型</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BE%E8%AE%A1/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a></li></ul></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/JMeter/" rel="tag">JMeter</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring-Boot/" rel="tag">Spring Boot</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/" rel="tag">考研复试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/JMeter/" style="font-size: 10px;">JMeter</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/MySQL/" style="font-size: 10px;">MySQL</a> <a href="/tags/RabbitMQ/" style="font-size: 20px;">RabbitMQ</a> <a href="/tags/Redis/" style="font-size: 20px;">Redis</a> <a href="/tags/Spring-Boot/" style="font-size: 20px;">Spring Boot</a> <a href="/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/" style="font-size: 20px;">考研复试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/08/">August 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/08/09/seckill-post/">基于 Spring Boot 的高并发秒杀系统：设计与落地</a>
+          </li>
+        
+          <li>
+            <a href="/2026/08/05/why-seckill/">毕设选题解析：为何我放弃CRUD，选择高并发秒杀系统作为考研复试项目</a>
+          </li>
+        
+          <li>
+            <a href="/2026/08/05/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
