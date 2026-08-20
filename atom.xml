@@ -9,7 +9,26 @@
   <link href="http://example.com/atom.xml" rel="self"/>
   <rights>All rights reserved 2026, John Doe</rights>
   <title>Hexo</title>
-  <updated>2026-08-09T05:50:14.426Z</updated>
+  <updated>2026-08-20T06:30:00.000Z</updated>
+  <entry>
+    <author>
+      <name>John Doe</name>
+    </author>
+    <category term="项目实战" scheme="http://example.com/categories/%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98/"/>
+    <category term="Spring Boot" scheme="http://example.com/tags/Spring-Boot/"/>
+    <category term="WebSocket" scheme="http://example.com/tags/WebSocket/"/>
+    <category term="Vue" scheme="http://example.com/tags/Vue/"/>
+    <category term="秒杀系统" scheme="http://example.com/tags/%E7%A7%92%E6%9D%80%E7%B3%BB%E7%BB%9F/"/>
+    <category term="性能优化" scheme="http://example.com/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
+    <category term="高并发" scheme="http://example.com/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/"/>
+    <category term="实时通信" scheme="http://example.com/tags/%E5%AE%9E%E6%97%B6%E9%80%9A%E4%BF%A1/"/>
+    <id>http://example.com/2026/08/20/websocket-seckill-optimization/</id>
+    <link href="http://example.com/2026/08/20/websocket-seckill-optimization/"/>
+    <published>2026-08-20T06:30:00.000Z</published>
+    <summary>本文记录了在毕设项目《高并发秒杀系统》中，针对下单结果通知场景，将传统的 HTTP 轮询方案优化为 WebSocket 长连接推送方案的全过程。重点解决了实时性不足、服务器资源浪费的问题，并实现了连接失败时的优雅降级。</summary>
+    <title>前端秒杀排队体验优化：从轮询到 WebSocket 的升级之路</title>
+    <updated>2026-08-20T06:30:00.000Z</updated>
+  </entry>
   <entry>
     <author>
       <name>John Doe</name>
@@ -20,9 +39,9 @@
     <category term="Spring Boot" scheme="http://example.com/tags/Spring-Boot/"/>
     <category term="Redis" scheme="http://example.com/tags/Redis/"/>
     <category term="RabbitMQ" scheme="http://example.com/tags/RabbitMQ/"/>
-    <category term="考研复试" scheme="http://example.com/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/"/>
     <category term="MySQL" scheme="http://example.com/tags/MySQL/"/>
     <category term="JMeter" scheme="http://example.com/tags/JMeter/"/>
+    <category term="考研复试" scheme="http://example.com/tags/%E8%80%83%E7%A0%94%E5%A4%8D%E8%AF%95/"/>
     <id>http://example.com/2026/08/09/seckill-post/</id>
     <link href="http://example.com/2026/08/09/seckill-post/"/>
     <published>2026-08-09T02:00:00.000Z</published>
